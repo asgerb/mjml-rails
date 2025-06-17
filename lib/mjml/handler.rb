@@ -17,7 +17,7 @@ module Mjml
       compiled_source = compile_source(source, template)
 
       parser_class = Mjml.use_mrml ? 'MrmlParser' : 'Parser'
-      template_path = template.virtual_path
+      template_path = get_template_path(template)
       # Per MJML v4 syntax documentation[0] valid/render'able document MUST start with <mjml> root tag
       # If we get here and template source doesn't start with one it means
       # that we are rendering partial named according to legacy naming convention (partials ending with '.mjml')
@@ -33,6 +33,21 @@ module Mjml
     end
 
     private
+
+    def is_view_component_template?(template)
+      defined?(ViewComponent) && template.class.name.include?('ViewComponent')
+    end
+
+    def get_template_path(template)
+      if template.respond_to?(:virtual_path)
+        template.virtual_path
+      elsif template.respond_to?(:identifier)
+        # ViewComponent DataWithSource has identifier instead of virtual_path
+        template.identifier
+      else
+        'view_component'
+      end
+    end
 
     def compile_source(source, template)
       if Rails::VERSION::MAJOR >= 6
